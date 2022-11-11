@@ -1,0 +1,14 @@
+<launch>
+  <!-- $(anon talker)$(anon simple_nav)" creates an anonymous name for this node -->
+
+<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_house.launch" />
+
+<include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch" >
+
+<arg name="map_file" value="$(dirname)/../maps/houseMap.yaml" />
+
+</include> 
+
+<node name="simple_navigation_ros" pkg="simple_navigation_ros" type="turtlebot_nav_to_pos.py" output="screen"> </node>
+
+</launch>
