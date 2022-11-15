@@ -1,13 +1,26 @@
 <launch>
 
+
+<arg name="initial_pose_x" value="-3.65"/>
+<arg name="initial_pose_y" value="1.52"/>
+
 <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_house.launch" /> 
 
 <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch" >
 
-<arg name="map_file" value="$(dirname)/../maps/waffleHouseMap.yaml" />
+    
+  <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+  <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+  
+    <arg name="map_file" value="$(dirname)/../maps/waffleHouseMap.yaml"  />
 
-</include> 
+</include>
 
-<node name="marsi_nav" pkg="simple_navigation_ros" type="action_turtlebot_nav.py" output="screen"> </node>
+
+
+
+
+
+<node name="marsi_nav" pkg="simple_navigation_ros" type="action_turtlebot_nav.py" output="screen"> </node> 
 
 </launch>

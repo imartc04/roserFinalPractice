@@ -21,6 +21,7 @@ add_service_files(
   FILES
   moveSrv.srv
   setPointMapSrv.srv
+  setInitPoseSrv.srv
 )
 
 

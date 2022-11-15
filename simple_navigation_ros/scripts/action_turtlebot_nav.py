@@ -9,13 +9,19 @@ import rospy
 import actionlib
 # Brings in the .action file and messages used by the move base action
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-from simple_navigation_ros.srv import moveSrv,setPointMapSrv
+from simple_navigation_ros.srv import moveSrv,setPointMapSrv, setInitPoseSrv
+from geometry_msgs.msg import PoseWithCovarianceStamped
+
 import yaml
 import random
+import time
 
 g_actionClient = None
 g_pointsMap = ""
 g_cancelGoals = False
+g_initPosePub = None
+
+#g_initPoseReq = None
 
 def getWayPointsFromFile():
     global g_pointsMap
@@ -32,6 +38,12 @@ def getWayPointsFromFile():
 def moveThroughWayPoints(f_mode):
 
     global g_actionClient
+
+
+    #Clear all possible goals before begin
+    g_actionClient.cancel_all_goals()
+    time.sleep(0.2)
+
 
     # Creates a new goal with the MoveBaseGoal constructor
     goal = MoveBaseGoal()
@@ -122,16 +134,55 @@ def setWayPoints(f_map):
     rospy.loginfo("New points map is in path %s ", g_pointsMap)
     return []
 
+def setInitPose(f_req):
+    global g_initPosePub
+    # global g_initPoseReq
+    # g_initPoseReq = f_req
+    l_initPoints = []
+
+    #Open initial pose file 
+    with open(f_req.initPoseFile) as file:
+        l_initPoints = yaml.load(file, Loader=yaml.FullLoader)
+    
+    rospy.loginfo("Initial points %s", l_initPoints)
+    l_initPoint = l_initPoints[f_req.initPosId]
+
+    #Set pose in rviz
+    l_msg = PoseWithCovarianceStamped()
+    l_msg.header.stamp = rospy.Time.now()
+    l_msg.header.frame_id = "/map"
+
+    print("Init point ", l_initPoint)
+
+    l_msg.pose.pose.position.x = l_initPoint[0]
+    l_msg.pose.pose.position.y = l_initPoint[1]
+
+    l_msg.pose.pose.orientation.x = l_initPoint[2]
+    l_msg.pose.pose.orientation.y = l_initPoint[3]
+    l_msg.pose.pose.orientation.z = l_initPoint[4]
+    l_msg.pose.pose.orientation.w = l_initPoint[5]
+
+    #Obtain topic publisher
+    rospy.loginfo("Setting initial pose to %s,%s", l_initPoint[0], l_initPoint[1])
+    
+
+    g_initPosePub.publish(l_msg)
+
+
 def initialize():
 
     rospy.init_node('marsi_nav')
 
     global g_actionClient
+    global g_initPosePub
     g_actionClient = actionlib.SimpleActionClient('move_base',MoveBaseAction)
     g_actionClient.wait_for_server()
 
     l_s1 = rospy.Service('marsi_nav_set_waypoints', setPointMapSrv, setWayPoints)
     l_s2 = rospy.Service('marsi_nav_move', moveSrv, move)
+
+    rospy.Service('marsi_nav_set_initPose', setInitPoseSrv , setInitPose)
+    g_initPosePub = rospy.Publisher("/initialpose", PoseWithCovarianceStamped, queue_size=10) 
 
     rospy.spin()
 
