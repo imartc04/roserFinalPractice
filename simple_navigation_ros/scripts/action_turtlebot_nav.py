@@ -25,12 +25,17 @@ g_initPosePub = None
 
 def getWayPointsFromFile():
     global g_pointsMap
-    l_points = None
-    with open(g_pointsMap) as file:
-        l_points = yaml.load(file, Loader=yaml.FullLoader)
-        rospy.loginfo(l_points)
+    l_points = {}
 
-    rospy.loginfo("Points loaded succesfully from %s file", g_pointsMap)
+    if g_pointsMap != "":
+        with open(g_pointsMap) as file:
+            l_points = yaml.load(file, Loader=yaml.FullLoader)
+            rospy.loginfo(l_points)
+
+        rospy.loginfo("Points loaded succesfully from %s file", g_pointsMap)
+    else:
+        print("There is no way points file. Set it through service")
+    
     return l_points
 
 
@@ -38,11 +43,14 @@ def getWayPointsFromFile():
 def moveThroughWayPoints(f_mode):
 
     global g_actionClient
+    global g_cancelGoals
 
 
     #Clear all possible goals before begin
     g_actionClient.cancel_all_goals()
+    g_cancelGoals = True
     time.sleep(0.2)
+    g_cancelGoals = False
 
 
     # Creates a new goal with the MoveBaseGoal constructor
@@ -52,56 +60,61 @@ def moveThroughWayPoints(f_mode):
     #Obtain way points from the file 
     l_points = getWayPointsFromFile()
 
-    l_loopIds = [*range(len(l_points))]
+    if len(l_points)>0:
 
-    #Set random order if needed
-    if f_mode == 1:
-        random.shuffle(l_loopIds) 
+        l_loopIds = [*range(len(l_points))]
+
+        #Set random order if needed
+        if f_mode == 1:
+            random.shuffle(l_loopIds) 
 
 
-    #Go over all the points 
-    l_ctr = 0
-    for i in l_loopIds:
+        #Go over all the points 
+        l_ctr = 0
+        for i in l_loopIds:
 
-        if g_cancelGoals:
-            rospy.loginfo("Goals have been canceled")
-            break
+            if g_cancelGoals:
+                rospy.loginfo("Goals have been canceled")
+                break
 
-        else:
-            rospy.loginfo("Going point number  %s", l_ctr)
-            l_point = l_points[i]
+            else:
+                rospy.loginfo("Going point number  %s", l_ctr)
+                l_point = l_points[i]
 
-            goal.target_pose.header.stamp = rospy.Time.now()
+                goal.target_pose.header.stamp = rospy.Time.now()
 
-            # Set position 
-            goal.target_pose.pose.position.x = l_point[0]
-            goal.target_pose.pose.position.y = l_point[1]
+                # Set position 
+                goal.target_pose.pose.position.x = l_point[0]
+                goal.target_pose.pose.position.y = l_point[1]
 
-            #Set orientation
-            goal.target_pose.pose.orientation.x = l_point[2]
-            goal.target_pose.pose.orientation.y = l_point[3]
-            goal.target_pose.pose.orientation.z = l_point[4]
-            goal.target_pose.pose.orientation.w = l_point[5]
+                #Set orientation
+                goal.target_pose.pose.orientation.x = l_point[2]
+                goal.target_pose.pose.orientation.y = l_point[3]
+                goal.target_pose.pose.orientation.z = l_point[4]
+                goal.target_pose.pose.orientation.w = l_point[5]
 
-            # Sends the goal to the action server.
-            g_actionClient.send_goal(goal)
+                # Sends the goal to the action server.
+                g_actionClient.send_goal(goal)
 
-            # Waits for the server to finish performing the action.
-            wait = g_actionClient.wait_for_result()
+                # Waits for the server to finish performing the action.
+                wait = g_actionClient.wait_for_result()
 
-            rospy.loginfo("WayPoint reached")
+                rospy.loginfo("WayPoint reached")
 
-            l_ctr = l_ctr + 1
+                l_ctr = l_ctr + 1
 
-            # # If the result doesn't arrive, assume the Server is not available
-            # if not wait:
-            #     rospy.logerr("Action server not available!")
-            #     rospy.signal_shutdown("Action server not available!")
-            # else:
-            # # Result of executing the action
-            #     return g_actionClient.get_result()   
+                # # If the result doesn't arrive, assume the Server is not available
+                # if not wait:
+                #     rospy.logerr("Action server not available!")
+                #     rospy.signal_shutdown("Action server not available!")
+                # else:
+                # # Result of executing the action
+                #     return g_actionClient.get_result()   
 
-    rospy.loginfo("Route through way points done")
+        rospy.loginfo("Route through way points done")
+
+    else:
+        print("No points to move through!!! Set waypoints file with service")
 
 def move(f_mode):
 

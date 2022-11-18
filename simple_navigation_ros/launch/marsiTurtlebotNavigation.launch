@@ -6,7 +6,7 @@
 
 <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_house.launch" /> 
 
-<include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch" >
+<include file="$(find simple_navigation_ros)/launch/turtlebot3_navigation_mod.launch" >
 
     
   <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
