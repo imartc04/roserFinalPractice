@@ -10,3 +10,7 @@ select a position in the rviz that corresponds to the position of the robot in g
 - Order robot to move : rosservice call /marsi_nav_move "mode: 0"
 
 mode parmeter is one of the following 0:Sequential between way points, 1:Random between way points, 2:Cancel movement
+
+
+Video demos :
+https://drive.google.com/drive/folders/1luuHtvInq9yioKXQ9o_aDTu__nHb3SXM?usp=share_link
